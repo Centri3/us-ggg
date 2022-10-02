@@ -132,10 +132,6 @@ fn valid(args: Valid) -> Result<()> {
     Ok(())
 }
 
-fn gui() -> Result<()> {
-    unimplemented!("gui is unfinished (i have not even started work on it yet), run with 'convert' or 'valid' subcommand instead, for example: 'us-ggg convert -h', or 'us-ggg valid -h' (:")
-}
-
 fn setup_logger() -> Result<(), InitError> {
     let colors = ColoredLevelConfig::default();
 
@@ -166,6 +162,10 @@ fn main() -> Result<()> {
         Some(Commands::Valid(Valid { input })) => valid(Valid {
             input: input.clone(),
         }),
-        None => gui(),
+        None => convert(Convert {
+            input: PathBuf::from("ggg-input.png"),
+            output: PathBuf::from("ggg-output.json"),
+            pos: 0u32,
+        }),
     }
 }
