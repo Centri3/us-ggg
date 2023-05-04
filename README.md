@@ -1,21 +1,40 @@
 # us-ggg
 
-A CLI tool for creating Universe Sandbox gas giants
+A tool to ease creation of gas giants in Universe Sandbox
+
+## Features
+
+* Can check if an image is a valid gas giant
+* Can convert an image into a gas giant, either overwriting the original body you pass or create a new one
+* **Can print the trans flag in your terminal (if your terminal supports ANSI)**
 
 ## Usage
 
-To check if an image is a valid gas giant, simply run: `us-ggg valid -i=image_name_here`
+**For a more in-depth explanation, run `us-ggg --help`, `us-ggg convert --help`, etc.**
 
-* To convert an image into a gas giant, simply run (while in the same working directory as the executable and image): `us-ggg convert -i=image_name_here -o=output_name_here --pos=pos_here`
-* Next, open the ubox archive containing your bodies' properties, which is usually residing in `C:\Users\You\Documents\Universe Sandbox\Objects` on Windows.
-* Replace the `Colors:[]` array in `object.json` with the contents of the outputted json from ggg.
-* Restart `Universe Sandbox`.
+To check if an image is a valid gas giant, simply run: `us-ggg <IMAGE> valid`.
 
-If this is too complex, a GUI is also planned for ggg, but this will not be done for a while (or maybe ever (: )
+To convert an image into a gas giant, simply run: `us-ggg convert <IMAGE> convert <OLD_GIANT> [NEW_GIANT] [POS]`
+
+Where `<OLD_GIANT>` is the path to the .ubox you wish to use (the object), you can find these in either:
+
+* `C:\Documents\Universe Sandbox\Objects`, on Windows
+* `~/Universe Sandbox/Objects`, on Unix-like systems (Linux/macOS)
+
+Where `[NEW_GIANT]` is the name `us-ggg` should give the new body. Don't pass this to overwrite the original body.
+
+Where `[POS]` is the column of your image to use if it has a width other than 1.
+
+After this, restart Universe Sandbox and your gas giant will be available!
 
 ## Installation
 
-Simply extract the archive in releases corresponding to your OS. (Windows only for now; if you're on another platform, feel free to build the source yourself!)
+Simply extract the archive in releases corresponding to your OS.
+
+* aarch64-apple-darwin - macOS Silicon
+* x86_64-apple-darwin - macOS x86_64
+* x86_64-pc-windows-gnu - Windows
+* x86_64-unknown-linux-gnu - Linux
 
 ## License
 
