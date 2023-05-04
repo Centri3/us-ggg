@@ -12,7 +12,7 @@ A tool to ease creation of gas giants in Universe Sandbox
 
 **For a more in-depth explanation, run `./us-ggg --help`, `./us-ggg convert --help`, etc.**
 
-To check if an image is a valid gas giant, simply run: `./us-ggg <IMAGE> valid`.
+To check if an image is a valid gas giant, simply run: `./us-ggg <IMAGE> check`.
 
 To convert an image into a gas giant, simply run: `./us-ggg convert <IMAGE> convert <OLD_GIANT> [NEW_GIANT] [POS]`
 
