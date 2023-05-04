@@ -1,171 +1,157 @@
-use clap::{Args, Parser, Subcommand};
+use clap::Parser;
+use clap::Subcommand;
+use eyre::bail;
+use eyre::Context;
 use eyre::Result;
-use fern::{colors::ColoredLevelConfig, Dispatch, InitError};
-use image::{io::Reader, GenericImageView};
-use log::{info, warn};
-use std::{fs::File, io::Write, path::PathBuf};
+use image::codecs::png::PngReader;
+use image::io::Reader;
+use image::GenericImageView;
+use image::ImageDecoder;
+use owo_colors::OwoColorize;
+use serde_json::Value;
+use std::fs;
+use std::fs::File;
+use std::io::Write as _;
+use std::path::PathBuf;
+use zip::write::FileOptions;
+use zip::ZipArchive;
+use zip::ZipWriter;
 
-#[derive(Debug, Parser)]
-#[command(author, version, about)]
+#[derive(Parser)]
 struct Cli {
+    /// Image to check/convert
+    image: PathBuf,
     #[command(subcommand)]
-    command: Option<Commands>,
+    command: Commands,
 }
 
-#[derive(Debug, Subcommand)]
+#[derive(Subcommand)]
 enum Commands {
-    /// Convert an image into a gas giant
-    Convert(Convert),
-    /// Check whether an image is a valid gas giant
-    Valid(Valid),
-}
-
-#[derive(Args, Debug)]
-struct Convert {
-    /// Path to input image. Relative to current working directory
-    #[arg(short, long, default_value = "ggg-input.png")]
-    input: PathBuf,
-    /// Path to output json. Relative to current working directory
-    #[arg(short, long, default_value = "ggg-output.json")]
-    output: PathBuf,
-    /// Use a different x-position than 0 if your input's width is > 1
-    #[arg(long, default_value_t = 0u32)]
-    pos: u32,
-}
-
-#[derive(Args, Debug)]
-struct Valid {
-    /// Path to input image. Relative to current working directory
-    #[arg(short, long, default_value = "ggg-input.png")]
-    input: PathBuf,
-}
-
-fn convert(args: Convert) -> Result<()> {
-    let input = match Reader::open(&args.input) {
-        Ok(ip) => match ip.decode() {
-            Ok(di) => di,
-            Err(e) => panic!(
-                "failed to decode file: {}, here's a 'detailed' description of the error: {}",
-                args.input.to_string_lossy(),
-                e.to_string().to_lowercase()
-            ),
-        },
-        Err(_) => panic!(
-            "failed to read file: {}, maybe you misspelt it?",
-            args.input.to_string_lossy()
-        ),
-    };
-
-    if input.width() > 1u32 {
-        warn!(
-            "{} width is above 1! using pixels with width: {} (pos)",
-            &args.input.to_string_lossy(),
-            &args.pos
-        )
-    }
-
-    let mut output = String::new();
-    output.push_str("\"Colors\":[\n");
-
-    for pixel in input.pixels() {
-        if pixel.0 != args.pos.clone() {
-            continue;
-        }
-
-        output.push_str(
-            format!(
-                "\"RGBA({:.3}, {:.3}, {:.3}, {:.3})\"{}{}",
-                pixel.2[0usize] as f32 / 255.0f32,
-                pixel.2[1usize] as f32 / 255.0f32,
-                pixel.2[2usize] as f32 / 255.0f32,
-                pixel.2[3usize] as f32 / 255.0f32,
-                match pixel.1 == input.height() - 1u32 {
-                    true => {
-                        "],"
-                    }
-                    false => ",",
-                },
-                match (pixel.1 + 1u32) % 10u32 == 0u32 {
-                    true => "\n",
-                    false => "",
-                },
-            )
-            .as_str(),
-        )
-    }
-
-    let mut file = File::create(format!("{}", args.output.to_string_lossy()))?;
-    writeln!(file, "{}", output)?;
-
-    Ok(())
-}
-
-fn valid(args: Valid) -> Result<()> {
-    let input = match Reader::open(&args.input) {
-        Ok(ip) => match ip.decode() {
-            Ok(di) => di,
-            Err(e) => panic!(
-                "failed to decode file: {}, here's a 'detailed' description of the error: {}",
-                args.input.to_string_lossy(),
-                e.to_string().to_lowercase(),
-            ),
-        },
-        Err(_) => panic!(
-            "failed to read file: {}, maybe you misspelt it?",
-            args.input.to_string_lossy(),
-        ),
-    };
-
-    if input.height() > 16384u32 {
-        info!(
-            "{} is not a valid gas giant! gas giants cannot have above 16384 bands (your input's height is: {})",
-            args.input.to_string_lossy(),
-            input.height(),
-        )
-    } else {
-        info!(
-            "{} is (most likely) a valid gas giant.",
-            args.input.to_string_lossy(),
-        )
-    }
-
-    Ok(())
-}
-
-fn setup_logger() -> Result<(), InitError> {
-    let colors = ColoredLevelConfig::default();
-
-    Dispatch::new()
-        .format(move |out, message, record| {
-            out.finish(format_args!(
-                "{}: '{}'",
-                colors.color(record.level()).to_string().to_lowercase(),
-                message
-            ))
-        })
-        .chain(std::io::stdout())
-        .apply()?;
-    Ok(())
+    /// Convert an image to a gas giant
+    Convert {
+        /// Path to the ubox containing your gas giant
+        old_giant: PathBuf,
+        /// Filename of the newly created body, don't pass to overwrite the original
+        new_giant: Option<String>,
+        /// Column of your image to use if its width is not 1
+        #[arg(default_value_t = 0u32)]
+        pos: u32,
+    },
+    /// Check if an image is a valid gas giant
+    Check,
+    /// ?
+    Print,
 }
 
 fn main() -> Result<()> {
-    setup_logger()?;
-
     let cli = Cli::parse();
+    let image = Reader::open(&cli.image)?.decode()?;
+    let filename = cli.image.file_name().unwrap().to_string_lossy();
 
-    match &cli.command {
-        Some(Commands::Convert(Convert { input, output, pos })) => convert(Convert {
-            input: input.clone(),
-            output: output.clone(),
-            pos: pos.clone(),
-        }),
-        Some(Commands::Valid(Valid { input })) => valid(Valid {
-            input: input.clone(),
-        }),
-        None => convert(Convert {
-            input: PathBuf::from("ggg-input.png"),
-            output: PathBuf::from("ggg-output.json"),
-            pos: 0u32,
-        }),
+    match cli.command {
+        Commands::Convert {
+            old_giant,
+            new_giant,
+            pos,
+        } => {
+            let mut ubox =
+                ZipArchive::new(File::open(&old_giant).wrap_err("ubox provided does not exist!")?)
+                    .wrap_err("ubox provided is not a renamed zip!")?;
+            let body = ubox.by_name("body.json")?;
+            let mut json = serde_json::from_reader::<_, Value>(body)
+                .wrap_err("body.json is not valid json!")?;
+            let components = json
+                .as_object_mut()
+                .expect("Not an object")
+                .get_mut("Components")
+                .expect("Components is missing")
+                .as_array_mut()
+                .expect("Components is not an array");
+
+            let mut found = false;
+            for component in components {
+                if component.get("$type").expect("$type is missing") == "AppearanceComponent" {
+                    found = true;
+
+                    let colors = component
+                        .get_mut("GasGiant")
+                        .expect("Not a gas giant")
+                        .as_object_mut()
+                        .expect("Not an object")
+                        .get_mut("Colors")
+                        .expect("Colors is missing")
+                        .as_array_mut()
+                        .expect("Colors is not an array");
+
+                    colors.clear();
+
+                    for pixel in image.pixels().filter(|p| p.0 == pos) {
+                        colors.push(Value::String(format!(
+                            "RGBA({:.3}, {:.3}, {:.3}, {:.3})",
+                            pixel.2[0usize] as f32 / 255.0f32,
+                            pixel.2[1usize] as f32 / 255.0f32,
+                            pixel.2[2usize] as f32 / 255.0f32,
+                            pixel.2[3usize] as f32 / 255.0f32,
+                        )))
+                    }
+
+                    break;
+                }
+            }
+
+            // early return if we could not find this
+            if !found {
+                bail!("Failed to find AppearanceComponent!");
+            }
+
+            let overwrite = new_giant.is_none();
+            let new_giant = new_giant.unwrap_or("TEMPUBOX.ubox".to_owned());
+            File::create(&new_giant)?;
+
+            let mut writer = ZipWriter::new(File::options().write(true).open(&new_giant)?);
+            for filename in
+                // fuck this shit
+                ZipArchive::new(
+                    File::open(&old_giant).wrap_err("ubox provided does not exist!")?,
+                )
+                .wrap_err("ubox provided is not a renamed zip!")?
+                .file_names()
+            {
+                if filename != "body.json" {
+                    writer.raw_copy_file(ubox.by_name(filename)?)?;
+                }
+            }
+            writer.start_file("body.json", FileOptions::default())?;
+            writer.write_all(format!("{json}").as_bytes())?;
+            writer.finish()?;
+
+            if overwrite {
+                fs::copy(&new_giant, old_giant)?;
+                // because it's "TEMPUBOX.ubox"
+                fs::remove_file(new_giant)?;
+            }
+
+            writeln!(std::fs::File::create("a")?, "{}", json)?;
+        }
+        Commands::Check => {
+            // lol what's the point
+
+            if image.height() > 16384 {
+                println!("{} is not a valid gas giant! They cannot have above 16384 bands (your image would create a giant with {} bands).", filename.bold(), image.height().bold());
+            } else if image.width() != 1 {
+                println!(
+                    "{} would (most likely) be a valid gas giant.",
+                    filename.bold()
+                )
+            }
+        }
+        Commands::Print => println!(
+            "{0:128}\n{1:128}\n{2:128}\n{1:128}\n{0:128}",
+            " ".on_blue(),
+            " ".on_purple(),
+            " ".on_white(),
+        ),
     }
+
+    Ok(())
 }
