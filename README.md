@@ -10,11 +10,11 @@ A tool to ease creation of gas giants in Universe Sandbox
 
 ## Usage
 
-**For a more in-depth explanation, run `us-ggg --help`, `us-ggg convert --help`, etc.**
+**For a more in-depth explanation, run `./us-ggg --help`, `./us-ggg convert --help`, etc.**
 
-To check if an image is a valid gas giant, simply run: `us-ggg <IMAGE> valid`.
+To check if an image is a valid gas giant, simply run: `./us-ggg <IMAGE> valid`.
 
-To convert an image into a gas giant, simply run: `us-ggg convert <IMAGE> convert <OLD_GIANT> [NEW_GIANT] [POS]`
+To convert an image into a gas giant, simply run: `./us-ggg convert <IMAGE> convert <OLD_GIANT> [NEW_GIANT] [POS]`
 
 Where `<OLD_GIANT>` is the path to the .ubox you wish to use (the object), you can find these in either:
 
@@ -35,6 +35,8 @@ Simply extract the archive in releases corresponding to your OS.
 * x86_64-apple-darwin - macOS x86_64
 * x86_64-pc-windows-gnu - Windows
 * x86_64-unknown-linux-gnu - Linux
+
+On Unix-like systems, you may need to do some extra setup; run `chmod +x us-ggg` from your terminal while in its directory. This will give it executable permission. You should also be able to do this from your file explorer.
 
 ## License
 
