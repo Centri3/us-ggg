@@ -21,7 +21,7 @@ Where `<OLD_GIANT>` is the path to the .ubox you wish to use (the object), you c
 * `C:\Documents\Universe Sandbox\Objects`, on Windows
 * `~/Universe Sandbox/Objects`, on Unix-like systems (Linux/macOS)
 
-Where `[NEW_GIANT]` is the name `us-ggg` should give the new body. Don't pass this to overwrite the original body.
+Where `[NEW_GIANT]` is the filename `us-ggg` should give the new ubox. Don't pass this to overwrite the original body.
 
 Where `[POS]` is the column of your image to use if it has a width other than 1.
 
