@@ -12,7 +12,7 @@ A tool to ease creation of gas giants in Universe Sandbox
 
 **For a more in-depth explanation, run `./us-ggg --help`, `./us-ggg convert --help`, etc.**
 
-To check if an image is a valid gas giant, simply run: `./us-ggg <IMAGE> valid`.
+To check if an image is a valid gas giant, simply run: `./us-ggg <IMAGE> check`.
 
 To convert an image into a gas giant, simply run: `./us-ggg convert <IMAGE> convert <OLD_GIANT> [NEW_GIANT] [POS]`
 
@@ -21,7 +21,7 @@ Where `<OLD_GIANT>` is the path to the .ubox you wish to use (the object), you c
 * `C:\Documents\Universe Sandbox\Objects`, on Windows
 * `~/Universe Sandbox/Objects`, on Unix-like systems (Linux/macOS)
 
-Where `[NEW_GIANT]` is the name `us-ggg` should give the new body. Don't pass this to overwrite the original body.
+Where `[NEW_GIANT]` is the filename `us-ggg` should give the new ubox. Don't pass this to overwrite the original body.
 
 Where `[POS]` is the column of your image to use if it has a width other than 1.
 
