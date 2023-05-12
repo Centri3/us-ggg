@@ -129,11 +129,13 @@ fn main() -> Result<()> {
                 fs::remove_file(new_giant)?;
             }
 
+            // FIXME: Remove debugging artifact
             writeln!(std::fs::File::create("a")?, "{}", json)?;
         }
         Commands::Check => {
             // lol what's the point
 
+            // FIXME: Change else if to else
             if image.height() > 16384 {
                 println!("{} is not a valid gas giant! They cannot have above 16384 bands (your image would create a giant with {} bands).", filename.bold(), image.height().bold());
             } else if image.width() != 1 {
